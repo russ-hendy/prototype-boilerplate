@@ -3,10 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from .database import connect_to_mongo, close_mongo_connection
 
+
+# Read environment variable to decide whether to expose documentation
+EXPOSE_DOCS = os.getenv("EXPOSE_DOCS", "true").lower() == "true"
+DOCS_URL = "/docs" if EXPOSE_DOCS else None
+REDOC_URL = "/redoc" if EXPOSE_DOCS else None
+
 # Create the FastAPI app instance
 app = FastAPI(
     title="Prototype Boilerplate API",
     version="0.1.0",
+    # Pass the variables to FastAPI
+    docs_url=DOCS_URL,
+    redoc_url=REDOC_URL,
 )
 
 # -------------------------------------------------------------

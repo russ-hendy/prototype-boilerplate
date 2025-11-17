@@ -6,15 +6,15 @@ services:
   # --------------------
   api:
     container_name: prototype_api
-    # Uses the Dockerfile we defined above
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
     # The command is defined in the Dockerfile.dev (uvicorn with --reload)
-    # Map the internal container port (8000) to a host port (8000)
+    # Map the internal container port (8000) to a host port (8000).
+    # REMOVE THIS MAPPING FOR PRODUCTION
     ports:
       - "8000:8000"
-    # This is the key for hot-reloading! It maps your local code into the container.
+    # This is the key for hot-reloading! It maps the local code into the container.
     volumes:
       - ./backend:/app
     environment:
@@ -51,9 +51,7 @@ services:
   db:
     container_name: prototype_db
     image: mongo:latest
-    # Map the internal port 27017 to the host port 27017 (Optional but useful for connecting a local GUI tool)
-    ports:
-      - "27017:27017"
+    # No port mapping for security
     # Persist the data to your local 'data/mongo_data' folder
     volumes:
       - ./data/mongo_data:/data/db
