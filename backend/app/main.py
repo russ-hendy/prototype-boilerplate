@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from .database import connect_to_mongo, close_mongo_connection
 
 # Create the FastAPI app instance
 app = FastAPI(
@@ -9,24 +10,19 @@ app = FastAPI(
 )
 
 # -------------------------------------------------------------
-# 1. CORS Configuration (Crucial for Local Development)
+# 1. CORS Configuration
 # -------------------------------------------------------------
 
-# For local development, the frontend (http://localhost:5173) is different 
-# from the backend (http://localhost:8000), which requires CORS.
-# In production with Caddy/subdomains, this might change, but for now, 
-# allowing all origins is safest for development.
+# Read the allowed origin from the environment variable
+allowed_origin = os.getenv("CORS_ORIGIN", "http://localhost:5173") # Default for safety
 
-origins = [
-    # Allows requests from your local Vue development server (port 5173)
-    "http://localhost:5173",
-]
+origins = [allowed_origin]
 
 app.add_middleware(
     CORSMiddleware,
     # Allow all origins for simplicity in this prototype. 
     # Use 'origins' list above for a tighter setup.
-    allow_origins=["*"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,7 +30,32 @@ app.add_middleware(
 
 
 # -------------------------------------------------------------
-# 2. Basic Endpoint
+# 2. Startup/Shutdown Events
+# -------------------------------------------------------------
+
+@app.on_event("startup")
+def startup_db_client():
+    """Connect to MongoDB when the API starts."""
+    # The connect function now returns the client and db objects
+    mongo_client, mongo_db = connect_to_mongo() 
+    
+    # --- CRITICAL CHANGE: Attach objects to the FastAPI app instance ---
+    app.mongodb_client = mongo_client
+    app.database = mongo_db 
+    
+    if app.database is None:
+        print("FATAL: Database object is None after connection attempt.")
+
+@app.on_event("shutdown")
+def shutdown_db_client():
+    """Close MongoDB connection using the client attached to the app."""
+    if hasattr(app, "mongodb_client"):
+        app.mongodb_client.close()
+        print("🔌 MongoDB Connection Closed.")
+
+
+# -------------------------------------------------------------
+# 3. Basic Endpoint
 # -------------------------------------------------------------
 
 @app.get("/")
@@ -45,22 +66,26 @@ def read_root():
     return {"message": "Hello from the FastAPI Backend! Dockerized and Ready."}
 
 
-# -------------------------------------------------------------
-# 3. MongoDB Connection Stub (Placeholder)
-# -------------------------------------------------------------
-# You can use this to quickly test environment variables loaded from .env/docker-compose
-@app.get("/db-check")
-def db_check():
+@app.get("/items")
+def get_items():
     """
-    Endpoint to confirm the database environment variables are loaded.
+    Example endpoint to fetch data from the MongoDB 'items' collection.
     """
-    # These variables are pulled from your docker-compose.yml environment block
-    mongo_host = os.getenv("MONGO_HOST")
-    mongo_user = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+    mongo_db = app.database 
     
-    return {
-        "status": "DB config loaded",
-        "host": mongo_host,
-        "user": mongo_user,
-        "note": "Actual connection logic (e.g., using pymongo) would go here."
-    }
+    if mongo_db is None:
+        return {"error": "Database not connected. (Check startup logs!)"}, 500
+        
+    items_collection = mongo_db.items
+    
+    # Find all documents (returning as a list)
+    items_cursor = items_collection.find({})
+    
+    # Convert MongoDB BSON objects to JSON-serializable dictionaries
+    items_list = []
+    for item in items_cursor:
+        # Convert the MongoDB ObjectID to a string for JSON serialization
+        item['_id'] = str(item['_id'])
+        items_list.append(item)
+        
+    return {"count": len(items_list), "data": items_list}

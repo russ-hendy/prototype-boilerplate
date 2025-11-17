@@ -1,11 +1,15 @@
-<script setup></script>
+<script setup>
+import ItemCount from './components/ItemCount.vue';
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <header>
+    <h1>Vue & FastAPI Boilerplate</h1>
+  </header>
+  
+  <main>
+    <ItemCount /> 
+  </main>
 </template>
 
 <style scoped></style>

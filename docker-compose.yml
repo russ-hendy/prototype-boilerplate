@@ -21,7 +21,11 @@ services:
       # Use the MongoDB service name for the connection string
       MONGO_HOST: db
       MONGO_PORT: 27017
-      # Other sensitive or environment-specific variables go here (e.g., Firebase key)
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+
+      # Set in root .env, e.g. http://localhost:5173 for dev
+      CORS_ORIGIN: ${CORS_ORIGIN}
     depends_on:
       - db
 
