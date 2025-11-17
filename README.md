@@ -64,4 +64,3 @@ The entire application's authentication can be enabled/disabled using environmen
   * **CORS Protection:** The `api` service is restricted to the domain defined by `CORS_ORIGIN` (e.g., `http://localhost:5173` or `https://www.prod-domain.com`).
   * **Database Isolation:** The MongoDB port (`27017`) is **not exposed** to the host machine for security. Use internal Docker network connections only.
   * **Production Deployment:** For production, remember to remove the `ports: 8000:8000` mapping on the `api` service and route traffic via a reverse proxy (e.g., Caddy).
-
