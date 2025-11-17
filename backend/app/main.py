@@ -1,8 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from .database import connect_to_mongo, close_mongo_connection
-
+from .security import require_auth
 
 # Read environment variable to decide whether to expose documentation
 EXPOSE_DOCS = os.getenv("EXPOSE_DOCS", "true").lower() == "true"
@@ -88,6 +88,26 @@ def get_items():
     items_collection = mongo_db.items
     
     # Find all documents (returning as a list)
+    items_cursor = items_collection.find({})
+    
+    # Convert MongoDB BSON objects to JSON-serializable dictionaries
+    items_list = []
+    for item in items_cursor:
+        # Convert the MongoDB ObjectID to a string for JSON serialization
+        item['_id'] = str(item['_id'])
+        items_list.append(item)
+        
+    return {"count": len(items_list), "data": items_list}
+
+@app.get("/secure-items", dependencies=[Depends(require_auth)])
+def get_items_secure():
+    """
+    This endpoint requires a valid Firebase token in the Authorization header.
+    """
+    # If the function is reached, the user is authenticated (or auth is disabled)
+    # The logic here is identical to /items, but protected.
+    mongo_db = app.database 
+    items_collection = mongo_db.items
     items_cursor = items_collection.find({})
     
     # Convert MongoDB BSON objects to JSON-serializable dictionaries

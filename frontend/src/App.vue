@@ -1,5 +1,11 @@
 <script setup>
+import { ref } from 'vue';
 import ItemCount from './components/ItemCount.vue';
+import Login from './components/Login.vue'; // <-- Import Login
+import { AUTH_ENABLED } from './firebase'; // <-- Import the flag
+
+// Ref for the Login component instance
+const loginComponent = ref(null);
 </script>
 
 <template>
@@ -8,7 +14,11 @@ import ItemCount from './components/ItemCount.vue';
   </header>
   
   <main>
-    <ItemCount /> 
+    <Login ref="loginComponent" />
+    <ItemCount 
+        :user="loginComponent?.user" 
+        :auth-enabled="AUTH_ENABLED"
+    />
   </main>
 </template>
 
