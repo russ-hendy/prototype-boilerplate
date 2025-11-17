@@ -1,3 +1,10 @@
+# Secrets and environment data
 .env
+
+# Docker data
 /data/
 
+# Python/Node environments
+/backend/__pycache__/
+/backend/.venv/
+/frontend/node_modules/
