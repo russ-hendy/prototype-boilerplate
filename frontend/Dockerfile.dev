@@ -1,0 +1,20 @@
+# Use the official Node.js image
+FROM node:lts-alpine
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package files first to leverage Docker layer caching
+COPY package*.json ./
+
+# --- CHANGE 1: Use 'yarn install' instead of 'npm install' ---
+# Note: Since package.json exists, Yarn will look for a yarn.lock file.
+RUN yarn install 
+
+# --- CHANGE 2: Use 'yarn dev' instead of 'npm run dev' ---
+# Assuming your package.json script is 'dev', which is common for Vite.
+# The --host 0.0.0.0 is still crucial.
+CMD ["yarn", "dev", "--host", "0.0.0.0"]
+
+# Expose the internal container port (assuming Vite/Vue)
+EXPOSE 5173
