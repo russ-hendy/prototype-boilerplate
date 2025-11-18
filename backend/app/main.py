@@ -134,13 +134,13 @@ class GenerateRequest(BaseModel):
     prompt: str
 
 # OpenAI simple chat completion
-@app.post("/generate")
+@app.post("/generate", dependencies=[Depends(require_auth)])
 async def generate_text(request: GenerateRequest):
     result = await generate_completion(request.prompt)
     return {"result": result}
 
 # OpenAI simple chat completion - streamed
-@app.post("/generate-stream")
+@app.post("/generate-stream", dependencies=[Depends(require_auth)])
 async def generate_text_stream(request: GenerateRequest):
     return StreamingResponse(
         generate_completion_stream(request.prompt), 
