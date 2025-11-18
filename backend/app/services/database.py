@@ -1,5 +1,3 @@
-# backend/app/database.py
-
 import os
 from pymongo import MongoClient
 
