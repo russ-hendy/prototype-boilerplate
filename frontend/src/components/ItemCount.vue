@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+
 
 // --- Define props to receive the user object ---
 const props = defineProps({
@@ -15,6 +17,7 @@ const error = ref(null);
 
 // Define the API URL using the right ENV 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
+const auth = useAuthStore();
 
 
 const fetchItemCount = async () => {
@@ -25,13 +28,13 @@ const fetchItemCount = async () => {
   let endpoint = '/items'; // Public endpoint
   let headers = { 'Content-Type': 'application/json' };
   
-  if (props.authEnabled) {
+  if (auth.authEnabled) {
       endpoint = '/secure-items'; // Protected endpoint
 
       // In development with auth disabled, user is null. We can skip token retrieval.
-      if (props.user) {
+      if (auth.user) {
           // 2. Get the ID Token from the Firebase user object
-          const token = await props.user.getIdToken(); 
+          const token = await auth.user.getIdToken(); 
           // 3. Add the token to the Authorization header
           headers['Authorization'] = `Bearer ${token}`;
       } else if (!props.user) {
