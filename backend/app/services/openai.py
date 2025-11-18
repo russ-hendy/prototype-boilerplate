@@ -14,3 +14,17 @@ async def generate_completion(prompt: str, model: str = "gpt-4") -> str:
         messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content
+
+
+# streamed completion
+def generate_completion_stream(prompt: str, model: str = "gpt-4"):
+    """Generate a streaming completion using OpenAI."""
+    stream = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        stream=True
+    )
+    
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            yield chunk.choices[0].delta.content

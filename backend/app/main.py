@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 import os
 from .services.database import connect_to_mongo, close_mongo_connection
 from .services.security import require_auth
-from .services.openai import generate_completion
+from .services.openai import generate_completion, generate_completion_stream
 from pydantic import BaseModel
 
 # Read environment variable to decide whether to expose documentation
@@ -132,10 +133,17 @@ def get_items_secure():
 class GenerateRequest(BaseModel):
     prompt: str
 
-
-
 # OpenAI simple chat completion
 @app.post("/generate")
 async def generate_text(request: GenerateRequest):
     result = await generate_completion(request.prompt)
     return {"result": result}
+
+# OpenAI simple chat completion - streamed
+@app.post("/generate-stream")
+async def generate_text_stream(request: GenerateRequest):
+    return StreamingResponse(
+        generate_completion_stream(request.prompt), 
+        media_type="text/plain"
+    )
+

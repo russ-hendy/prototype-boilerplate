@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import ItemCount from './components/ItemCount.vue';
+import AIConversation from './components/AIConversation.vue';
 import Login from './components/Login.vue'; // <-- Import Login
 import { AUTH_ENABLED } from './firebase'; // <-- Import the flag
 
@@ -19,6 +20,7 @@ const loginComponent = ref(null);
         :user="loginComponent?.user" 
         :auth-enabled="AUTH_ENABLED"
     />
+    <AIConversation />
   </main>
 </template>
 
