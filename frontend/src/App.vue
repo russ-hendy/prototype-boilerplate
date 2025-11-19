@@ -3,7 +3,6 @@ import { ref } from 'vue';
 import ItemCount from './components/ItemCount.vue';
 import AIConversation from './components/AIConversation.vue';
 import Login from './components/Login.vue'; // <-- Import Login
-import { AUTH_ENABLED } from './firebase'; // <-- Import the flag
 
 // Ref for the Login component instance
 const loginComponent = ref(null);
@@ -16,10 +15,7 @@ const loginComponent = ref(null);
   
   <main>
     <Login ref="loginComponent" />
-    <ItemCount 
-        :user="loginComponent?.user" 
-        :auth-enabled="AUTH_ENABLED"
-    />
+    <ItemCount />
     <AIConversation />
   </main>
 </template>

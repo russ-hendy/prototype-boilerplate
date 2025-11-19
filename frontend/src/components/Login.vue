@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useAuthStore } from '@/stores/auth';
+import { useAuth } from '@/composables/useAuth';
 
 import { 
     signInWithEmailAndPassword, 
@@ -15,13 +15,14 @@ const email = ref('');
 const password = ref('');
 const loginError = ref(null);
 const isLoading = ref(false);
-const auth = useAuthStore();
+const { user, login, logout } = useAuth();
+
 
 onMounted(() => {
     if (authInstance) {
         // Simple listener to track user state changes
         authInstance.onAuthStateChanged((firebaseUser) => {
-            auth.setUser(firebaseUser);
+            login(firebaseUser);
         });
     }
 });
@@ -38,8 +39,8 @@ const handleLogin = async () => {
             email.value, 
             password.value
         );
-        auth.setUser(userCredential.user);
-        console.log("Logged in successfully:", auth.user.value.uid);
+        login(userCredential.user);
+        console.log("Logged in successfully:", user.value.uid);
     } catch (error) {
         console.error("Login failed:", error.code);
         loginError.value = error.message;
@@ -52,7 +53,7 @@ const handleLogout = async () => {
     if (!authInstance) return;
     try {
         await signOut(authInstance);
-        auth.clearUser();
+        logout();
         console.log("Logged out.");
     } catch (error) {
         console.error("Logout failed:", error);
@@ -71,8 +72,8 @@ const handleGoogleLogin = async () => {
         // 1. Open the Google sign-in pop-up
         const userCredential = await signInWithPopup(authInstance, googleProvider);
         
-        auth.setUser(userCredential.user);
-        console.log("Logged in successfully via Google:", auth.user.value.uid);
+        login(userCredential.user);
+        console.log("Logged in successfully via Google:", user.value.uid);
     } catch (error) {
         console.error("Google login failed:", error.code);
         // Handle common errors like pop-up closed or account exists
@@ -92,9 +93,9 @@ const handleGoogleLogin = async () => {
             Authentication is disabled (AUTH_ENABLED=false).
         </div>
 
-        <div v-else-if="auth.user" class="logged-in-state">
-            <p>Welcome, **{{ auth.user.email }}**</p>
-            <p>UID: `{{ auth.user.uid }}`</p>
+        <div v-else-if="user" class="logged-in-state">
+            <p>Welcome, {{ user.email }}</p>
+            <p>UID: {{ user.uid }}</p>
             
             <button @click="handleLogout" class="logout-btn">
                 Sign Out

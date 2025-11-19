@@ -39,6 +39,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { apiFetch } from '@/services/api';
 
 // Define the API URL using the right ENV 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
@@ -69,7 +70,7 @@ const sendPrompt = async () => {
 };
 
 const sendRegularRequest = async () => {
-  const response = await fetch(`${API_URL_BASE}/generate`, {
+  const response = await apiFetch('/generate', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ const sendRegularRequest = async () => {
 };
 
 const sendStreamingRequest = async () => {
-  const response = await fetch(`${API_URL_BASE}/generate-stream`, {
+  const response = await apiFetch('/generate-stream', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
