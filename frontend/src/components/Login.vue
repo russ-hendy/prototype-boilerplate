@@ -1,25 +1,32 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useAuth } from '@/composables/useAuth';
+
 import { 
     signInWithEmailAndPassword, 
     signOut,
     GoogleAuthProvider,
     signInWithPopup,
 } from 'firebase/auth';
-import { authInstance, AUTH_ENABLED } from '../firebase'; 
+import { authInstance } from '../firebase'; 
 
 // Reactive state variables
 const email = ref('');
 const password = ref('');
-const user = ref(null);
 const loginError = ref(null);
 const isLoading = ref(false);
+const { authEnabled, user, login, logout } = useAuth();
+
 
 onMounted(() => {
     if (authInstance) {
         // Simple listener to track user state changes
         authInstance.onAuthStateChanged((firebaseUser) => {
-            user.value = firebaseUser;
+            if (firebaseUser) {
+                login(firebaseUser);
+            } else {
+                logout();
+            }
         });
     }
 });
@@ -36,8 +43,8 @@ const handleLogin = async () => {
             email.value, 
             password.value
         );
-        user.value = userCredential.user;
-        console.log("Logged in successfully:", user.value.uid);
+        login(userCredential.user);
+        console.log("Logged in successfully:", user.value?.uid);
     } catch (error) {
         console.error("Login failed:", error.code);
         loginError.value = error.message;
@@ -50,7 +57,7 @@ const handleLogout = async () => {
     if (!authInstance) return;
     try {
         await signOut(authInstance);
-        user.value = null;
+        logout();
         console.log("Logged out.");
     } catch (error) {
         console.error("Logout failed:", error);
@@ -69,7 +76,7 @@ const handleGoogleLogin = async () => {
         // 1. Open the Google sign-in pop-up
         const userCredential = await signInWithPopup(authInstance, googleProvider);
         
-        user.value = userCredential.user;
+        login(userCredential.user);
         console.log("Logged in successfully via Google:", user.value.uid);
     } catch (error) {
         console.error("Google login failed:", error.code);
@@ -80,23 +87,19 @@ const handleGoogleLogin = async () => {
     }
 };
 
-// Expose the current user state
-defineExpose({
-    user
-});
 </script>
 
 <template>
     <div class="auth-panel">
         <h3>🔐 Firebase Authentication</h3>
         
-        <div v-if="!AUTH_ENABLED" class="warning">
+        <div v-if="!authEnabled" class="warning">
             Authentication is disabled (AUTH_ENABLED=false).
         </div>
 
         <div v-else-if="user" class="logged-in-state">
-            <p>Welcome, **{{ user.email }}**</p>
-            <p>UID: `{{ user.uid }}`</p>
+            <p>Welcome, {{ user.email }}</p>
+            <p>UID: {{ user.uid }}</p>
             
             <button @click="handleLogout" class="logout-btn">
                 Sign Out

@@ -1,53 +1,23 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { useAuth } from '@/composables/useAuth';
+import { apiFetch } from '@/services/api';
 
-// --- Define props to receive the user object ---
-const props = defineProps({
-    user: Object, // The Firebase user object
-    authEnabled: Boolean // The AUTH_ENABLED flag
-});
-// ----------------------------------------------------
+const { user } = useAuth();
 
 // Define a reactive variable to hold the item count
 const itemCount = ref(0);
 const isLoading = ref(true);
 const error = ref(null);
 
-// Define the API URL using the right ENV 
-const API_URL_BASE = import.meta.env.VITE_API_URL;
-
 
 const fetchItemCount = async () => {
   isLoading.value = true;
   error.value = null;
 
-  // 1. Determine the endpoint and check for token requirement
-  let endpoint = '/items'; // Public endpoint
-  let headers = { 'Content-Type': 'application/json' };
-  
-  if (props.authEnabled) {
-      endpoint = '/secure-items'; // Protected endpoint
-
-      // In development with auth disabled, user is null. We can skip token retrieval.
-      if (props.user) {
-          // 2. Get the ID Token from the Firebase user object
-          const token = await props.user.getIdToken(); 
-          // 3. Add the token to the Authorization header
-          headers['Authorization'] = `Bearer ${token}`;
-      } else if (!props.user) {
-          // If auth is enabled but user is null, we can't fetch the secure endpoint
-          isLoading.value = false;
-          error.value = 'Login required to access /secure-items.';
-          return;
-      }
-  }
-  
   try {
     // 1. Fetch the data from the FastAPI endpoint
-    const response = await fetch(API_URL_BASE + endpoint, {
-        method: 'GET',
-        headers: headers // <-- Use the prepared headers
-    });
+    const response = await apiFetch('/secure-items');
     
     // Check for HTTP errors (e.g., 404, 500)
     if (!response.ok) {
@@ -73,7 +43,7 @@ const fetchItemCount = async () => {
 onMounted(fetchItemCount);
 
 // Watch the user object: refresh data whenever the user logs in/out
-watch(() => props.user, () => {
+watch(() => user, () => {
     fetchItemCount();
 });
 

@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 import os
-from .database import connect_to_mongo, close_mongo_connection
-from .security import require_auth
+from .services.database import connect_to_mongo, close_mongo_connection
+from .services.security import require_auth
+from .services.openai import generate_completion, generate_completion_stream
+from pydantic import BaseModel
 
 # Read environment variable to decide whether to expose documentation
 EXPOSE_DOCS = os.getenv("EXPOSE_DOCS", "true").lower() == "true"
@@ -99,6 +102,8 @@ def get_items():
         
     return {"count": len(items_list), "data": items_list}
 
+
+# Secured endpoint using Auth
 @app.get("/secure-items", dependencies=[Depends(require_auth)])
 def get_items_secure():
     """
@@ -118,3 +123,27 @@ def get_items_secure():
         items_list.append(item)
         
     return {"count": len(items_list), "data": items_list}
+
+
+
+# this class is used to structure the JSON Request payload e.g. 
+# {
+#     prompt: 'Write a haiku about Depeche Mode'
+# }
+class GenerateRequest(BaseModel):
+    prompt: str
+
+# OpenAI simple chat completion
+@app.post("/generate", dependencies=[Depends(require_auth)])
+async def generate_text(request: GenerateRequest):
+    result = await generate_completion(request.prompt)
+    return {"result": result}
+
+# OpenAI simple chat completion - streamed
+@app.post("/generate-stream", dependencies=[Depends(require_auth)])
+async def generate_text_stream(request: GenerateRequest):
+    return StreamingResponse(
+        generate_completion_stream(request.prompt), 
+        media_type="text/plain"
+    )
+
