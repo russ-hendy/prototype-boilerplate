@@ -3,23 +3,12 @@ import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 import { apiFetch } from '@/services/api';
 
-const { user, getToken, authEnabled } = useAuth();
-
-// --- Define props to receive the user object ---
-const props = defineProps({
-    user: Object, // The Firebase user object
-    authEnabled: Boolean // The AUTH_ENABLED flag
-});
-// ----------------------------------------------------
+const { user } = useAuth();
 
 // Define a reactive variable to hold the item count
 const itemCount = ref(0);
 const isLoading = ref(true);
 const error = ref(null);
-
-// Define the API URL using the right ENV 
-const API_URL_BASE = import.meta.env.VITE_API_URL;
-
 
 
 const fetchItemCount = async () => {
@@ -54,7 +43,7 @@ const fetchItemCount = async () => {
 onMounted(fetchItemCount);
 
 // Watch the user object: refresh data whenever the user logs in/out
-watch(() => props.user, () => {
+watch(() => user, () => {
     fetchItemCount();
 });
 
