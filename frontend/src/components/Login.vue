@@ -8,21 +8,25 @@ import {
     GoogleAuthProvider,
     signInWithPopup,
 } from 'firebase/auth';
-import { authInstance, AUTH_ENABLED } from '../firebase'; 
+import { authInstance } from '../firebase'; 
 
 // Reactive state variables
 const email = ref('');
 const password = ref('');
 const loginError = ref(null);
 const isLoading = ref(false);
-const { user, login, logout } = useAuth();
+const { authEnabled, user, login, logout } = useAuth();
 
 
 onMounted(() => {
     if (authInstance) {
         // Simple listener to track user state changes
         authInstance.onAuthStateChanged((firebaseUser) => {
-            login(firebaseUser);
+            if (firebaseUser) {
+                login(firebaseUser);
+            } else {
+                logout();
+            }
         });
     }
 });
@@ -40,7 +44,7 @@ const handleLogin = async () => {
             password.value
         );
         login(userCredential.user);
-        console.log("Logged in successfully:", user.value.uid);
+        console.log("Logged in successfully:", user.value?.uid);
     } catch (error) {
         console.error("Login failed:", error.code);
         loginError.value = error.message;
@@ -89,7 +93,7 @@ const handleGoogleLogin = async () => {
     <div class="auth-panel">
         <h3>🔐 Firebase Authentication</h3>
         
-        <div v-if="!AUTH_ENABLED" class="warning">
+        <div v-if="!authEnabled" class="warning">
             Authentication is disabled (AUTH_ENABLED=false).
         </div>
 

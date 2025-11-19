@@ -1,18 +1,21 @@
-import { useAuth } from '@/composables/useAuth';
+import { useAuthStore } from '@/stores/auth';
 
 const API_URL_BASE = import.meta.env.VITE_API_URL;
 
 export async function apiFetch(endpoint, options = {}) {
-  const { authEnabled, getToken } = useAuth();
+  const auth = useAuthStore();
 
   const headers = {
-    ...(options.headers || {}),
-    'Content-Type': options?.skipJson ? undefined : 'application/json'
+    ...(options.headers || {})
   };
 
-  // Auto-inject token if enabled
-  if (authEnabled.value) {
-    const token = await getToken();
+  if (!options.skipJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  // Auto-inject token (if enabled)
+  if (auth.authEnabled) {
+    const token = await auth.getFreshToken();
     if (!token) {
       throw new Error("No token available: user must be logged in.");
     }
@@ -24,12 +27,11 @@ export async function apiFetch(endpoint, options = {}) {
     headers
   });
 
-  // Throw readable error for HTTP non-2xx
+  // Throw readable error for HTTP failures
   if (!response.ok) {
     const text = await response.text().catch(() => 'Unknown error');
     throw new Error(`HTTP ${response.status}: ${text}`);
   }
 
-  // ❗Important: return raw Response – caller decides how to read it
-  return response;
+  return response; // caller decides how to read it
 }
